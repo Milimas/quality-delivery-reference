@@ -20,10 +20,33 @@ test('every framework stage is classified and production claims are qualified', 
   ]) {
     assert.match(
       matrix,
-      new RegExp(`\\| ${stage}\\s+\\|.*\\| (Executable|Configurable|Documented)\\s+\\|`)
+      new RegExp(
+        `\\| ${stage}\\s+\\|.*\\| (Executable|Demonstration|External requirement|Not implemented)\\s+\\|`
+      )
     );
   }
   assert.match(matrix, /No production environment is exercised by this repository/);
+});
+
+test('the matrix does not claim evidence that no command produces', async () => {
+  const matrix = await readFile('docs/framework/verification-matrix.md', 'utf8');
+
+  assert.match(matrix, /\| Development\s+\|.*\| Executable\s+\|/);
+  assert.match(matrix, /\| Pull request\s+\|.*\| Executable\s+\|/);
+  assert.match(matrix, /\| Main\s+\|.*\| Executable\s+\|/);
+  assert.match(matrix, /\| Nightly\s+\|.*\| Demonstration\s+\|/);
+  assert.match(matrix, /\| Pre-production\s+\|.*\| Not implemented\s+\|/);
+  assert.match(matrix, /\| Production canary\s+\|.*\| External requirement\s+\|/);
+  assert.match(matrix, /\| Production ongoing\s+\|.*\| External requirement\s+\|/);
+
+  for (const unsupported of [
+    'performance regression',
+    'load and soak evidence',
+    'resilience rehearsal',
+    'authenticated DAST'
+  ]) {
+    assert.match(matrix, new RegExp(`${unsupported}.*Not implemented`, 'i'));
+  }
 });
 
 test('production guide names every operational prerequisite category', async () => {
