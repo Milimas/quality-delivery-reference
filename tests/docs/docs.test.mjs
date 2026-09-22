@@ -2,6 +2,11 @@ import { access, readFile } from 'node:fs/promises';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
+test('documentation assets resolve beneath the GitHub Pages project path', async () => {
+  const { default: config } = await import('../../docs/.vitepress/config.ts');
+  assert.equal(config.base, '/quality-delivery-reference/');
+});
+
 test('every framework stage is classified and production claims are qualified', async () => {
   const matrix = await readFile('docs/framework/verification-matrix.md', 'utf8');
   for (const stage of [
