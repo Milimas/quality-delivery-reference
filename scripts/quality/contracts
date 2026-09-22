@@ -1,0 +1,43 @@
+#!/bin/sh
+set -eu
+
+OASDIFF_IMAGE=${OASDIFF_IMAGE:-tufin/oasdiff:v1.32.1}
+script_root=$(CDPATH= cd -- "$(dirname "$0")/../.." && pwd)
+repo_root=$(git -C "$script_root" rev-parse --show-toplevel 2>/dev/null || printf '%s\n' "$script_root")
+base_ref=${BASE_REF:-origin/main}
+contracts='contracts/orders.openapi.yaml contracts/pricing.openapi.yaml'
+base_dir=
+
+run_oasdiff() {
+  if [ -n "$base_dir" ]; then
+    docker run --rm -v "$repo_root:/repo:ro" -v "$base_dir:/base:ro" "$OASDIFF_IMAGE" "$@"
+  else
+    docker run --rm -v "$repo_root:/repo:ro" "$OASDIFF_IMAGE" "$@"
+  fi
+}
+
+for contract in $contracts; do
+  run_oasdiff breaking --fail-on ERR -- "/repo/$contract" "/repo/$contract" >/dev/null
+done
+printf 'OpenAPI syntax: valid (%s)\n' "$contracts"
+
+if ! git -C "$repo_root" rev-parse --verify "$base_ref^{commit}" >/dev/null 2>&1; then
+  printf 'Compatibility comparison skipped: base ref %s is unavailable.\n' "$base_ref"
+  exit 0
+fi
+
+merge_base=$(git -C "$repo_root" merge-base HEAD "$base_ref")
+base_dir=$(mktemp -d)
+trap 'rm -rf "$base_dir"' EXIT INT TERM
+mkdir -p "$base_dir/contracts"
+
+for contract in $contracts; do
+  if git -C "$repo_root" cat-file -e "$merge_base:$contract" 2>/dev/null; then
+    git -C "$repo_root" show "$merge_base:$contract" >"$base_dir/$contract"
+    run_oasdiff breaking --fail-on ERR -- "/base/$contract" "/repo/$contract"
+  else
+    printf '%s is new; no base contract to compare.\n' "$contract"
+  fi
+done
+
+printf 'OpenAPI compatibility: no breaking changes relative to %s.\n' "$base_ref"

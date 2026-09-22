@@ -1,0 +1,41 @@
+#!/bin/sh
+set -eu
+
+source_repo=${1:-}
+destination=${2:-}
+
+[ -n "$source_repo" ] && [ -n "$destination" ] || {
+  printf 'usage: %s SOURCE_REPOSITORY EMPTY_DESTINATION\n' "$0" >&2
+  exit 2
+}
+
+source_repo=$(CDPATH= cd -- "$source_repo" && pwd)
+case "$destination" in
+  /|"$source_repo"|"$source_repo"/*)
+    printf 'refusing unsafe destination: %s\n' "$destination" >&2
+    exit 2
+    ;;
+esac
+
+if [ -e "$destination" ]; then
+  [ -d "$destination" ] && [ -z "$(find "$destination" -mindepth 1 -maxdepth 1 -print -quit)" ] || {
+    printf 'destination directory must be empty: %s\n' "$destination" >&2
+    exit 2
+  }
+fi
+
+git clone --no-local "$source_repo" "$destination"
+cd "$destination"
+
+if [ "$(git config --get core.hooksPath || true)" = .githooks ]; then
+  printf 'expected hooks to be inactive in a clean clone\n' >&2
+  exit 1
+fi
+
+./scripts/bootstrap
+[ "$(git config --get core.hooksPath)" = .githooks ]
+make check-fast
+make integration
+make docs-build
+
+printf 'Clean-clone verification passed.\n'

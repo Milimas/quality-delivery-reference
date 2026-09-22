@@ -1,0 +1,73 @@
+name: quality-delivery-reference
+
+services:
+  postgres:
+    image: postgres:17.6-alpine
+    environment:
+      POSTGRES_DB: orders
+      POSTGRES_USER: quality
+      POSTGRES_PASSWORD: local-development-only
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U quality -d orders']
+      interval: 2s
+      timeout: 3s
+      retries: 20
+    volumes:
+      - orders-data:/var/lib/postgresql/data
+      - ./apps/orders/migrations:/docker-entrypoint-initdb.d:ro
+    networks: [platform]
+
+  pricing:
+    build:
+      context: .
+      dockerfile: apps/pricing/Dockerfile
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:3001/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+        ]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+    ports:
+      - '127.0.0.1:${PRICING_PORT:-13001}:3001'
+    networks: [platform]
+
+  orders:
+    build:
+      context: .
+      dockerfile: apps/orders/Dockerfile
+    environment:
+      DATABASE_URL: postgres://quality:local-development-only@postgres:5432/orders
+      PRICING_URL: http://pricing:3001
+    depends_on:
+      postgres:
+        condition: service_healthy
+      pricing:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:3000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+        ]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+    ports:
+      - '127.0.0.1:${ORDERS_PORT:-13000}:3000'
+    volumes:
+      - ./tests:/workspace/tests:ro
+    networks: [platform]
+
+networks:
+  platform:
+    internal: true
+
+volumes:
+  orders-data:

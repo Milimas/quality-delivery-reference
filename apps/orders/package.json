@@ -1,0 +1,20 @@
+{
+  "name": "@quality-reference/orders",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch src/index.ts",
+    "start": "node src/index.ts",
+    "typecheck": "tsc -p tsconfig.json",
+    "test:unit": "node --test test/order.unit.test.ts test/http-pricing-client.unit.test.ts",
+    "test:component": "node --test test/orders.component.test.ts"
+  },
+  "dependencies": {
+    "fastify": "^5.6.1",
+    "pg": "^8.16.3"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.15.5"
+  }
+}

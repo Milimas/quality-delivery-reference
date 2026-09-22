@@ -1,0 +1,90 @@
+openapi: 3.1.0
+info:
+  title: Pricing API
+  version: 1.0.0
+paths:
+  /health:
+    get:
+      operationId: pricingHealth
+      responses:
+        '200':
+          description: Service is ready
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status:
+                    type: string
+                    const: ok
+  /v1/prices/quote:
+    post:
+      operationId: quotePrice
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuoteRequest'
+      responses:
+        '200':
+          description: Price quote
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Quote'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: SKU not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  schemas:
+    QuoteRequest:
+      type: object
+      additionalProperties: false
+      required: [sku, quantity]
+      properties:
+        sku:
+          type: string
+          minLength: 1
+        quantity:
+          type: integer
+          minimum: 1
+          maximum: 100
+    Quote:
+      type: object
+      additionalProperties: false
+      required:
+        - sku
+        - quantity
+        - unitPriceCents
+        - totalCents
+      properties:
+        sku:
+          type: string
+        quantity:
+          type: integer
+        unitPriceCents:
+          type: integer
+          minimum: 0
+        totalCents:
+          type: integer
+          minimum: 0
+    Error:
+      type: object
+      additionalProperties: false
+      required: [code, message]
+      properties:
+        code:
+          type: string
+        message:
+          type: string

@@ -1,0 +1,31 @@
+#!/bin/sh
+set -eu
+
+TRIVY_IMAGE=${TRIVY_IMAGE:-aquasec/trivy:0.74.0}
+repo_root=$(CDPATH= cd -- "$(dirname "$0")/../.." && pwd)
+evidence="$repo_root/artifacts/image-digests.txt"
+mkdir -p "$repo_root/artifacts"
+cd "$repo_root"
+
+docker compose build orders pricing
+
+orders_image=quality-delivery-reference-orders
+pricing_image=quality-delivery-reference-pricing
+orders_id=$(docker image inspect --format '{{.Id}}' "$orders_image")
+pricing_id=$(docker image inspect --format '{{.Id}}' "$pricing_image")
+
+printf 'orders@%s\npricing@%s\n' "$orders_id" "$pricing_id" >"$evidence"
+
+for image in "$orders_image" "$pricing_image"; do
+  docker run --rm \
+    -v /var/run/docker.sock:/var/run/docker.sock \
+    -v quality-reference-trivy-cache:/root/.cache/trivy \
+    "$TRIVY_IMAGE" image \
+    --scanners vuln \
+    --severity HIGH,CRITICAL \
+    --ignore-unfixed \
+    --exit-code 1 \
+    "$image"
+done
+
+printf 'Immutable image evidence written to %s\n' "$evidence"

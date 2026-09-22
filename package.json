@@ -1,0 +1,32 @@
+{
+  "name": "quality-delivery-reference",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A runnable reference for continuous quality gates from development to production.",
+  "license": "MIT",
+  "packageManager": "pnpm@12.5.1",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint .",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "test": "pnpm test:meta && pnpm test:unit && pnpm test:component",
+    "test:meta": "node --test tests/meta/*.test.mjs",
+    "test:unit": "pnpm -r --if-present test:unit",
+    "test:component": "pnpm -r --if-present test:component",
+    "docs:dev": "pnpm --filter @quality-reference/docs dev",
+    "docs:build": "pnpm --filter @quality-reference/docs build"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.36.0",
+    "@types/node": "^24.5.2",
+    "eslint": "^9.36.0",
+    "globals": "^16.4.0",
+    "prettier": "^3.6.2",
+    "typescript": "^5.9.2",
+    "typescript-eslint": "^8.44.1"
+  }
+}

@@ -1,0 +1,36 @@
+#!/bin/sh
+set -eu
+
+scope=${1:-all}
+case "$scope" in
+  integration|e2e|all) ;;
+  *) printf 'usage: %s [integration|e2e|all]\n' "$0" >&2; exit 2 ;;
+esac
+
+repo_root=$(CDPATH= cd -- "$(dirname "$0")/../.." && pwd)
+project="quality-reference-$$"
+cd "$repo_root"
+
+cleanup() {
+  status=$?
+  if [ "$status" -ne 0 ]; then
+    printf '\nQuality environment failed; collected service logs follow.\n' >&2
+    docker compose -p "$project" logs --no-color >&2 || true
+  fi
+  docker compose -p "$project" down --volumes --remove-orphans >/dev/null 2>&1 || true
+  exit "$status"
+}
+trap cleanup EXIT INT TERM
+
+docker compose -p "$project" up --build --detach --wait --wait-timeout 120
+
+if [ "$scope" = integration ] || [ "$scope" = all ]; then
+  docker compose -p "$project" exec -T \
+    -e PRICING_TEST_URL=http://pricing:3001 \
+    orders node --test tests/integration/*.test.mjs
+fi
+if [ "$scope" = e2e ] || [ "$scope" = all ]; then
+  docker compose -p "$project" exec -T \
+    -e ORDERS_TEST_URL=http://127.0.0.1:3000 \
+    orders node --test tests/e2e/*.test.mjs
+fi

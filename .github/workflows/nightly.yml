@@ -1,0 +1,27 @@
+name: Nightly quality
+
+on:
+  schedule:
+    - cron: '17 2 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  extended:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: 24
+          package-manager-cache: false
+      - run: corepack enable && pnpm install --frozen-lockfile
+      - run: make check
+      - run: make integration
+      - run: make e2e
+      - run: make security
+      - name: Declare the evidence boundary
+        run: echo "No production environment is exercised by this repository."

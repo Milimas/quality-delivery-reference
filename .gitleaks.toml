@@ -1,0 +1,8 @@
+title = "Quality delivery reference allowlist"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Synthetic credentials used to prove the scanner fails"
+paths = ['''tests/security/security\.test\.mjs''']
