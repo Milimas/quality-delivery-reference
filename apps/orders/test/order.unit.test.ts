@@ -3,6 +3,11 @@ import { describe, it } from 'node:test';
 import { createOrder } from '../src/domain/order.ts';
 import type { Order, OrderRepository } from '../src/ports/order-repository.ts';
 
+const fixedRuntime = {
+  newId: () => '00000000-0000-4000-8000-000000000001',
+  now: () => '2026-09-22T12:00:00.000Z'
+};
+
 class RecordingRepository implements OrderRepository {
   readonly saved: Order[] = [];
 
@@ -21,16 +26,33 @@ describe('createOrder', () => {
     const order = await createOrder(
       { sku: 'WIDGET', quantity: 2 },
       { quote: async () => ({ sku: 'WIDGET', quantity: 2, totalCents: 2500 }) },
-      repository
+      repository,
+      fixedRuntime
     );
 
-    assert.equal(order.totalCents, 2500);
-    assert.match(order.id, /^[0-9a-f-]{36}$/);
+    assert.deepEqual(order, {
+      id: '00000000-0000-4000-8000-000000000001',
+      sku: 'WIDGET',
+      quantity: 2,
+      totalCents: 2500,
+      createdAt: '2026-09-22T12:00:00.000Z'
+    });
     assert.deepEqual(repository.saved, [order]);
   });
 
   it('does not persist when pricing fails', async () => {
     const repository = new RecordingRepository();
+    let runtimeCalls = 0;
+    const runtime = {
+      newId: () => {
+        runtimeCalls += 1;
+        return fixedRuntime.newId();
+      },
+      now: () => {
+        runtimeCalls += 1;
+        return fixedRuntime.now();
+      }
+    };
     await assert.rejects(
       createOrder(
         { sku: 'WIDGET', quantity: 2 },
@@ -39,10 +61,12 @@ describe('createOrder', () => {
             throw new Error('pricing offline');
           }
         },
-        repository
+        repository,
+        runtime
       ),
       /pricing offline/
     );
     assert.deepEqual(repository.saved, []);
+    assert.equal(runtimeCalls, 0);
   });
 });

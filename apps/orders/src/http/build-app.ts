@@ -3,10 +3,12 @@ import { PricingUnavailableError } from '../adapters/http-pricing-client.ts';
 import { createOrder, InvalidOrderError } from '../domain/order.ts';
 import type { OrderRepository } from '../ports/order-repository.ts';
 import type { PricingClient } from '../ports/pricing.ts';
+import type { RuntimeValues } from '../ports/runtime.ts';
 
 export interface OrdersDependencies {
   repository: OrderRepository;
   pricing: PricingClient;
+  runtime: RuntimeValues;
 }
 
 interface CreateOrderBody {
@@ -39,7 +41,8 @@ export function buildOrdersApp(dependencies: OrdersDependencies): FastifyInstanc
         const order = await createOrder(
           request.body,
           dependencies.pricing,
-          dependencies.repository
+          dependencies.repository,
+          dependencies.runtime
         );
         return reply.code(201).send(order);
       } catch (error) {

@@ -1,6 +1,6 @@
-import { randomUUID } from 'node:crypto';
 import type { Order, OrderRepository } from '../ports/order-repository.ts';
 import type { PricingClient } from '../ports/pricing.ts';
+import type { RuntimeValues } from '../ports/runtime.ts';
 
 export interface CreateOrderInput {
   sku: string;
@@ -14,7 +14,8 @@ export class InvalidOrderError extends Error {
 export async function createOrder(
   input: CreateOrderInput,
   pricing: PricingClient,
-  repository: OrderRepository
+  repository: OrderRepository,
+  runtime: RuntimeValues
 ): Promise<Order> {
   if (input.sku.trim().length === 0) {
     throw new InvalidOrderError('SKU is required');
@@ -25,11 +26,11 @@ export async function createOrder(
 
   const quote = await pricing.quote(input.sku, input.quantity);
   const order: Order = {
-    id: randomUUID(),
+    id: runtime.newId(),
     sku: input.sku,
     quantity: input.quantity,
     totalCents: quote.totalCents,
-    createdAt: new Date().toISOString()
+    createdAt: runtime.now()
   };
   await repository.save(order);
   return order;

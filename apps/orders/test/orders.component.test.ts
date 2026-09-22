@@ -4,6 +4,11 @@ import { PricingUnavailableError } from '../src/adapters/http-pricing-client.ts'
 import { buildOrdersApp } from '../src/http/build-app.ts';
 import type { Order, OrderRepository } from '../src/ports/order-repository.ts';
 
+const fixedRuntime = {
+  newId: () => '00000000-0000-4000-8000-000000000001',
+  now: () => '2026-09-22T12:00:00.000Z'
+};
+
 class RecordingRepository implements OrderRepository {
   readonly saved: Order[] = [];
 
@@ -31,7 +36,8 @@ describe('orders HTTP API', () => {
         quote: async () => {
           throw new PricingUnavailableError('pricing offline');
         }
-      }
+      },
+      runtime: fixedRuntime
     });
     apps.push(app);
 
@@ -53,7 +59,8 @@ describe('orders HTTP API', () => {
     const repository = new RecordingRepository();
     const app = buildOrdersApp({
       repository,
-      pricing: { quote: async () => ({ sku: 'WIDGET', quantity: 2, totalCents: 2500 }) }
+      pricing: { quote: async () => ({ sku: 'WIDGET', quantity: 2, totalCents: 2500 }) },
+      runtime: fixedRuntime
     });
     apps.push(app);
 
@@ -65,6 +72,13 @@ describe('orders HTTP API', () => {
     const fetched = await app.inject({ method: 'GET', url: `/v1/orders/${created.json().id}` });
 
     assert.equal(created.statusCode, 201);
+    assert.deepEqual(created.json(), {
+      id: '00000000-0000-4000-8000-000000000001',
+      sku: 'WIDGET',
+      quantity: 2,
+      totalCents: 2500,
+      createdAt: '2026-09-22T12:00:00.000Z'
+    });
     assert.deepEqual(fetched.json(), created.json());
   });
 });
