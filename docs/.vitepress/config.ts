@@ -1,6 +1,7 @@
 import { defineConfig } from 'vitepress';
 
 export default defineConfig({
+  base: '/quality-delivery-reference/',
   title: 'Quality Delivery Reference',
   description: 'Executable quality gates from development to production.',
   cleanUrls: true,
