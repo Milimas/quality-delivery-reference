@@ -66,8 +66,7 @@ services:
     networks: [platform]
 
 networks:
-  platform:
-    internal: true
+  platform: {}
 
 volumes:
   orders-data:
