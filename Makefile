@@ -5,7 +5,9 @@ DEV_IMAGE := quality-reference-dev
 
 tool:
 	docker build -q -f containers/dev.Dockerfile -t $(DEV_IMAGE) . >/dev/null
-	docker run --rm -v "$(CURDIR):/workspace" -w /workspace $(DEV_IMAGE) sh -lc 'pnpm install --frozen-lockfile && $(CMD)'
+	docker run --rm --user "$$(id -u):$$(id -g)" -e HOME=/tmp/dev-home \
+		-v "$(CURDIR):/workspace" -w /workspace $(DEV_IMAGE) \
+		sh -lc 'pnpm install --frozen-lockfile && $(CMD)'
 
 install:
 	pnpm install --frozen-lockfile
