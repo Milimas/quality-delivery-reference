@@ -1,0 +1,68 @@
+#!/bin/sh
+set -u
+
+repo_root=$(CDPATH= cd -- "$(dirname "$0")/../.." && pwd)
+cd "$repo_root"
+mkdir -p artifacts/tests
+
+started_at=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
+started_ms=$(node -e 'process.stdout.write(String(Date.now()))')
+
+if [ -n "${QUALITY_TEST_COMMAND:-}" ]; then
+  unit_command=$QUALITY_TEST_COMMAND
+  component_command=$QUALITY_TEST_COMMAND
+else
+  unit_command='pnpm test:unit'
+  component_command='pnpm test:component'
+fi
+
+unit_started_ms=$(node -e 'process.stdout.write(String(Date.now()))')
+sh -c "$unit_command"
+unit_status=$?
+unit_finished_ms=$(node -e 'process.stdout.write(String(Date.now()))')
+
+component_started_ms=$(node -e 'process.stdout.write(String(Date.now()))')
+sh -c "$component_command"
+component_status=$?
+component_finished_ms=$(node -e 'process.stdout.write(String(Date.now()))')
+
+status=$unit_status
+if [ "$status" -eq 0 ]; then
+  status=$component_status
+fi
+
+finished_at=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
+finished_ms=$(node -e 'process.stdout.write(String(Date.now()))')
+
+EVIDENCE_STARTED_AT=$started_at \
+EVIDENCE_FINISHED_AT=$finished_at \
+EVIDENCE_DURATION_MS=$((finished_ms - started_ms)) \
+EVIDENCE_STATUS=$status \
+UNIT_STATUS=$unit_status \
+UNIT_DURATION_MS=$((unit_finished_ms - unit_started_ms)) \
+COMPONENT_STATUS=$component_status \
+COMPONENT_DURATION_MS=$((component_finished_ms - component_started_ms)) \
+node -e '
+  const fs = require("node:fs");
+  const suite = (name, status, durationMs) => ({
+    name,
+    result: Number(status) === 0 ? "passed" : "failed",
+    exitCode: Number(status),
+    durationMs: Number(durationMs)
+  });
+  const evidence = {
+    environmentClassification: "local-or-ci",
+    startedAt: process.env.EVIDENCE_STARTED_AT,
+    finishedAt: process.env.EVIDENCE_FINISHED_AT,
+    durationMs: Number(process.env.EVIDENCE_DURATION_MS),
+    retryCount: 0,
+    result: Number(process.env.EVIDENCE_STATUS) === 0 ? "passed" : "failed",
+    suites: [
+      suite("unit", process.env.UNIT_STATUS, process.env.UNIT_DURATION_MS),
+      suite("component", process.env.COMPONENT_STATUS, process.env.COMPONENT_DURATION_MS)
+    ]
+  };
+  fs.writeFileSync("artifacts/tests/service-tests.json", `${JSON.stringify(evidence, null, 2)}\n`);
+'
+
+exit "$status"

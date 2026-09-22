@@ -33,7 +33,7 @@ jobs:
           node-version: 24
           package-manager-cache: false
       - run: corepack enable && pnpm install --frozen-lockfile
-      - run: pnpm test
+      - run: make service-tests
 
   contracts:
     runs-on: ubuntu-latest
