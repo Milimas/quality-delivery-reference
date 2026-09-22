@@ -2,24 +2,12 @@ import assert from 'node:assert/strict';
 import { afterEach, describe, it } from 'node:test';
 import { PricingUnavailableError } from '../src/adapters/http-pricing-client.ts';
 import { buildOrdersApp } from '../src/http/build-app.ts';
-import type { Order, OrderRepository } from '../src/ports/order-repository.ts';
+import { InMemoryOrderRepository } from './support/in-memory-order-repository.ts';
 
 const fixedRuntime = {
   newId: () => '00000000-0000-4000-8000-000000000001',
   now: () => '2026-09-22T12:00:00.000Z'
 };
-
-class RecordingRepository implements OrderRepository {
-  readonly saved: Order[] = [];
-
-  async save(order: Order): Promise<void> {
-    this.saved.push(order);
-  }
-
-  async findById(id: string): Promise<Order | undefined> {
-    return this.saved.find((order) => order.id === id);
-  }
-}
 
 describe('orders HTTP API', () => {
   const apps: ReturnType<typeof buildOrdersApp>[] = [];
@@ -29,7 +17,7 @@ describe('orders HTTP API', () => {
   });
 
   it('does not persist when pricing is unavailable', async () => {
-    const repository = new RecordingRepository();
+    const repository = new InMemoryOrderRepository();
     const app = buildOrdersApp({
       repository,
       pricing: {
@@ -52,11 +40,11 @@ describe('orders HTTP API', () => {
       code: 'PRICING_UNAVAILABLE',
       message: 'Pricing is temporarily unavailable'
     });
-    assert.deepEqual(repository.saved, []);
+    assert.equal(await repository.findById(fixedRuntime.newId()), undefined);
   });
 
   it('creates and retrieves an order', async () => {
-    const repository = new RecordingRepository();
+    const repository = new InMemoryOrderRepository();
     const app = buildOrdersApp({
       repository,
       pricing: { quote: async () => ({ sku: 'WIDGET', quantity: 2, totalCents: 2500 }) },

@@ -1,0 +1,23 @@
+#!/bin/sh
+set -eu
+
+repo_root=$(CDPATH= cd -- "$(dirname "$0")/../.." && pwd)
+project="quality-reference-adapter-$$"
+cd "$repo_root"
+
+cleanup() {
+  status=$?
+  if [ "$status" -ne 0 ]; then
+    printf '\nOrders adapter test failed; collected service logs follow.\n' >&2
+    docker compose -p "$project" logs --no-color >&2 || true
+  fi
+  docker compose -p "$project" down --volumes --remove-orphans >/dev/null 2>&1 || true
+  exit "$status"
+}
+trap cleanup EXIT INT TERM
+
+docker compose -p "$project" build orders
+docker compose -p "$project" up --detach --wait --wait-timeout 120 postgres
+docker compose -p "$project" run --rm --no-deps \
+  -e DATABASE_URL=postgres://quality:local-development-only@postgres:5432/orders \
+  orders node --test apps/orders/test/postgres-order-repository.adapter.test.ts

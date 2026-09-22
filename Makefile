@@ -1,7 +1,7 @@
 SHELL := /bin/sh
 DEV_IMAGE := quality-reference-dev
 
-.PHONY: tool install dev down format format-check lint typecheck test-unit test-component test-meta integration e2e contracts security build-images docs-build check-fast check
+.PHONY: tool install dev down format format-check lint typecheck test-unit test-component test-meta test-adapters integration e2e contracts security build-images docs-build check-fast check
 
 tool:
 	docker build -q -f containers/dev.Dockerfile -t $(DEV_IMAGE) . >/dev/null
@@ -38,6 +38,9 @@ test-unit:
 
 test-component:
 	pnpm test:component
+
+test-adapters:
+	./scripts/quality/orders-adapter
 
 integration:
 	./scripts/quality/integration integration
