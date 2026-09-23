@@ -1,9 +1,11 @@
 # Local feedback
 
-`./scripts/bootstrap` checks prerequisites before changing Git configuration, then runs `git config core.hooksPath .githooks` for this clone.
+`./scripts/bootstrap` checks prerequisites, removes the repository's legacy `.githooks` setting when present, runs the frozen pnpm install, and explicitly installs the pinned hooks from `lefthook.yml`. The root `prepare` script also installs them on dependency setup.
 
 - `pre-commit` delegates to `make check-fast`.
 - `pre-push` delegates to `make check`.
-- Both resolve the repository root, so invocation from a subdirectory works.
+- Lefthook runs both commands from the repository root.
 
-Hooks are not enforcement. They are clone-local, require activation, and can be bypassed. Required GitHub checks protect the shared branch.
+Hooks are not enforcement. They are clone-local and can be bypassed. Required GitHub checks protect the shared branch.
+
+Container dependency installs set `LEFTHOOK=0`: image builds need packages, but they have no Git checkout in which to install developer hooks.

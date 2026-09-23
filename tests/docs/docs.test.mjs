@@ -73,6 +73,6 @@ test('the source framework is credited and core pages exist', async () => {
     access('docs/guide/getting-started.md'),
     access('docs/gates/catalog.md'),
     access('docs/adoption/existing-repository.md'),
-    access('docs/decisions/native-git-hooks.md')
+    access('docs/decisions/lefthook.md')
   ]);
 });

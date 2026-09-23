@@ -199,7 +199,7 @@ make production-checks
 make quality-report
 ```
 
-Native Git hooks delegate to the fast and full commands. GitHub Actions call the same canonical commands. Scripts return the underlying failure code, collect relevant artifacts, and never silently retry until green.
+The pinned Lefthook configuration delegates to the fast and full commands. GitHub Actions call the same canonical commands. Scripts return the underlying failure code, collect relevant artifacts, and never silently retry until green.
 
 ## Repository organization
 
