@@ -27,7 +27,7 @@ This repository turns the ideas in Amine Beihaqi's [From Code to Production](htt
 
 ## Start with a failure
 
-Clone, activate the native Git hooks, run the platform, and deliberately break a focused test. The [five-minute guide](/guide/getting-started) shows the complete feedback loop.
+Clone, install the pinned Lefthook dependency, run the platform, and deliberately break a focused test. The [five-minute guide](/guide/getting-started) shows the complete feedback loop.
 
 ## What this repository proves
 

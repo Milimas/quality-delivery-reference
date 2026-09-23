@@ -3,11 +3,12 @@
 ## Prerequisites
 
 - Git
+- Node.js 24 and pnpm
 - Docker with Compose
 - Make
 - A POSIX-compatible shell
 
-Node and scanners run through the repository toolchain or pinned containers.
+Scanners run through pinned containers. Lefthook and the JavaScript toolchain are pinned by the workspace lockfile.
 
 ```sh
 ./scripts/bootstrap

@@ -2,7 +2,7 @@
 
 A runnable reference for moving a change from local development toward production with explicit evidence at every gate.
 
-It manifests the framework from [From Code to Production: A Quality Framework for Multi-Service Platforms](https://www.beihaqi.com/blog/from-code-to-production) as two small services, native Git hooks, shared quality commands, GitHub Actions, and an implementation guide.
+It manifests the framework from [From Code to Production: A Quality Framework for Multi-Service Platforms](https://www.beihaqi.com/blog/from-code-to-production) as two small services, Lefthook-managed Git hooks, shared quality commands, GitHub Actions, and an implementation guide.
 
 > This repository does not deploy to production. It executes the gates that are honest on a workstation and in CI, then documents exactly what real pre-production and production stages require.
 
@@ -18,11 +18,12 @@ The first four stages produce executable repository evidence. Pre-production is 
 ## Prerequisites
 
 - Git
+- Node.js 24 and pnpm
 - Docker with Compose
 - Make
 - A POSIX-compatible shell
 
-Node, PostgreSQL, oasdiff, Gitleaks, and Trivy are project or container dependencies rather than global prerequisites.
+PostgreSQL, oasdiff, Gitleaks, and Trivy are project or container dependencies rather than global prerequisites.
 
 ## Five-minute path
 
@@ -44,7 +45,7 @@ apps/orders/      order API, PostgreSQL adapter, unit/component tests
 apps/pricing/     pricing API and focused tests
 contracts/        versioned OpenAPI contracts
 scripts/quality/  canonical local and CI gates
-.githooks/        dependency-free Git entry points
+lefthook.yml       pre-commit and pre-push quality commands
 .github/          authoritative workflows and contribution policy
 docs/             VitePress implementation guide
 tests/            contract, integration, E2E, security, and meta tests
@@ -65,7 +66,7 @@ tests/            contract, integration, E2E, security, and meta tests
 
 ## Enforcement model
 
-Native hooks shorten feedback but can be skipped. The pull-request workflow's stable `quality-gate` is the branch-ruleset requirement and fails unless every required concern succeeds.
+Lefthook shortens feedback but can be skipped. The pull-request workflow's stable `quality-gate` is the branch-ruleset requirement and fails unless every required concern succeeds.
 
 See the [documentation](docs/index.md), [design](docs/superpowers/specs/2026-09-22-quality-delivery-reference-design.md), and [implementation plan](docs/superpowers/plans/2026-09-22-quality-delivery-reference.md).
 

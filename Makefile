@@ -1,11 +1,11 @@
 SHELL := /bin/sh
 DEV_IMAGE := quality-reference-dev
 
-.PHONY: tool install dev down format format-check lint typecheck test-unit test-component test-meta integration e2e contracts security build-images docs-build check-fast check
+.PHONY: tool install dev down format format-check lint typecheck test-unit test-component test-meta service-tests test-adapters integration e2e contracts security build-images docs-build check-fast check
 
 tool:
 	docker build -q -f containers/dev.Dockerfile -t $(DEV_IMAGE) . >/dev/null
-	docker run --rm --user "$$(id -u):$$(id -g)" -e HOME=/tmp/dev-home \
+	docker run --rm --user "$$(id -u):$$(id -g)" -e HOME=/tmp/dev-home -e LEFTHOOK=0 \
 		-v "$(CURDIR):/workspace" -w /workspace $(DEV_IMAGE) \
 		sh -lc 'pnpm install --frozen-lockfile && $(CMD)'
 
@@ -38,6 +38,12 @@ test-unit:
 
 test-component:
 	pnpm test:component
+
+service-tests:
+	./scripts/quality/service-tests
+
+test-adapters:
+	./scripts/quality/orders-adapter
 
 integration:
 	./scripts/quality/integration integration

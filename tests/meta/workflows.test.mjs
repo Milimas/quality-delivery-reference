@@ -7,7 +7,7 @@ test('pull request workflow exposes an authoritative stable gate', async () => {
   assert.match(workflow, /^permissions:\n {2}contents: read$/m);
   assert.match(workflow, /^ {2}quality-gate:$/m);
   assert.match(workflow, /^ {4}if: always\(\)$/m);
-  assert.match(workflow, /needs: \[fast, tests, contracts, integration, security\]/);
+  assert.match(workflow, /needs: \[fast, tests, contracts, integration, real-adapters, security\]/);
   assert.match(workflow, /process\.exit\(1\)/);
 });
 

@@ -2,6 +2,7 @@ FROM node:24-bookworm-slim AS dependencies
 
 RUN corepack enable && corepack prepare pnpm@12.5.1 --activate
 WORKDIR /workspace
+ENV LEFTHOOK=0
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/orders/package.json apps/orders/package.json

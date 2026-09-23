@@ -2,19 +2,12 @@ import assert from 'node:assert/strict';
 import { afterEach, describe, it } from 'node:test';
 import { PricingUnavailableError } from '../src/adapters/http-pricing-client.ts';
 import { buildOrdersApp } from '../src/http/build-app.ts';
-import type { Order, OrderRepository } from '../src/ports/order-repository.ts';
+import { InMemoryOrderRepository } from './support/in-memory-order-repository.ts';
 
-class RecordingRepository implements OrderRepository {
-  readonly saved: Order[] = [];
-
-  async save(order: Order): Promise<void> {
-    this.saved.push(order);
-  }
-
-  async findById(id: string): Promise<Order | undefined> {
-    return this.saved.find((order) => order.id === id);
-  }
-}
+const fixedRuntime = {
+  newId: () => '00000000-0000-4000-8000-000000000001',
+  now: () => '2026-09-22T12:00:00.000Z'
+};
 
 describe('orders HTTP API', () => {
   const apps: ReturnType<typeof buildOrdersApp>[] = [];
@@ -24,14 +17,15 @@ describe('orders HTTP API', () => {
   });
 
   it('does not persist when pricing is unavailable', async () => {
-    const repository = new RecordingRepository();
+    const repository = new InMemoryOrderRepository();
     const app = buildOrdersApp({
       repository,
       pricing: {
         quote: async () => {
           throw new PricingUnavailableError('pricing offline');
         }
-      }
+      },
+      runtime: fixedRuntime
     });
     apps.push(app);
 
@@ -46,14 +40,15 @@ describe('orders HTTP API', () => {
       code: 'PRICING_UNAVAILABLE',
       message: 'Pricing is temporarily unavailable'
     });
-    assert.deepEqual(repository.saved, []);
+    assert.equal(await repository.findById(fixedRuntime.newId()), undefined);
   });
 
   it('creates and retrieves an order', async () => {
-    const repository = new RecordingRepository();
+    const repository = new InMemoryOrderRepository();
     const app = buildOrdersApp({
       repository,
-      pricing: { quote: async () => ({ sku: 'WIDGET', quantity: 2, totalCents: 2500 }) }
+      pricing: { quote: async () => ({ sku: 'WIDGET', quantity: 2, totalCents: 2500 }) },
+      runtime: fixedRuntime
     });
     apps.push(app);
 
@@ -65,6 +60,13 @@ describe('orders HTTP API', () => {
     const fetched = await app.inject({ method: 'GET', url: `/v1/orders/${created.json().id}` });
 
     assert.equal(created.statusCode, 201);
+    assert.deepEqual(created.json(), {
+      id: '00000000-0000-4000-8000-000000000001',
+      sku: 'WIDGET',
+      quantity: 2,
+      totalCents: 2500,
+      createdAt: '2026-09-22T12:00:00.000Z'
+    });
     assert.deepEqual(fetched.json(), created.json());
   });
 });

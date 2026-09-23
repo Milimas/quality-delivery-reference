@@ -10,9 +10,16 @@ command -v git >/dev/null 2>&1 || fail 'Git is required.'
 command -v docker >/dev/null 2>&1 || fail 'Docker with Compose is required.'
 docker compose version >/dev/null 2>&1 || fail 'Docker with Compose is required.'
 command -v make >/dev/null 2>&1 || fail 'Make is required.'
+command -v pnpm >/dev/null 2>&1 || fail 'pnpm is required.'
 
 repo_root=$(git rev-parse --show-toplevel 2>/dev/null) || fail 'Run this command inside a Git checkout.'
-git -C "$repo_root" config core.hooksPath .githooks
+hooks_path=$(git -C "$repo_root" config --get core.hooksPath || true)
+if [ "$hooks_path" = .githooks ]; then
+  git -C "$repo_root" config --unset core.hooksPath
+fi
 
-printf 'Local quality hooks enabled for %s\n' "$repo_root"
+pnpm -C "$repo_root" install --frozen-lockfile
+pnpm -C "$repo_root" exec lefthook install
+
+printf 'Lefthook quality hooks enabled for %s\n' "$repo_root"
 printf 'Run `make check-fast` to verify the developer gate.\n'

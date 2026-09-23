@@ -1,7 +1,10 @@
 node_modules/
 dist/
 coverage/
-artifacts/
+artifacts/*
+!artifacts/tests/
+artifacts/tests/*
+!artifacts/tests/README.md
 .env
 .env.*
 !.env.example

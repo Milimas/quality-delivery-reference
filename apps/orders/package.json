@@ -7,8 +7,9 @@
     "dev": "node --watch src/index.ts",
     "start": "node src/index.ts",
     "typecheck": "tsc -p tsconfig.json",
-    "test:unit": "node --test test/order.unit.test.ts test/http-pricing-client.unit.test.ts",
-    "test:component": "node --test test/orders.component.test.ts"
+    "test:unit": "node --test test/order.unit.test.ts test/http-pricing-client.unit.test.ts test/in-memory-order-repository.test.ts",
+    "test:component": "node --test test/orders.component.test.ts",
+    "test:adapter": "node --test test/postgres-order-repository.adapter.test.ts"
   },
   "dependencies": {
     "fastify": "^5.6.1",

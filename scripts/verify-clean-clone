@@ -27,13 +27,14 @@ fi
 git clone --no-local "$source_repo" "$destination"
 cd "$destination"
 
-if [ "$(git config --get core.hooksPath || true)" = .githooks ]; then
+if [ -e .git/hooks/pre-commit ] || [ -e .git/hooks/pre-push ]; then
   printf 'expected hooks to be inactive in a clean clone\n' >&2
   exit 1
 fi
 
 ./scripts/bootstrap
-[ "$(git config --get core.hooksPath)" = .githooks ]
+[ -x .git/hooks/pre-commit ]
+[ -x .git/hooks/pre-push ]
 make check-fast
 make integration
 make docs-build

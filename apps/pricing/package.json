@@ -7,10 +7,13 @@
     "dev": "node --watch src/index.ts",
     "start": "node src/index.ts",
     "typecheck": "tsc -p tsconfig.json",
-    "test:unit": "node --test test/price.unit.test.ts",
+    "test:unit": "node --test test/price.unit.test.ts test/price.property.test.ts",
     "test:component": "node --test test/pricing.component.test.ts"
   },
   "dependencies": {
     "fastify": "^5.6.1"
+  },
+  "devDependencies": {
+    "fast-check": "4.3.0"
   }
 }

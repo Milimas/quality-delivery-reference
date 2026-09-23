@@ -1,6 +1,8 @@
 # CI authority
 
-The pull-request workflow has separate fast, test, contract, integration, and security jobs. The stable `quality-gate` job runs with `always()` and fails unless every required job succeeded. Configure the `main` ruleset to require this one stable status after it has run once.
+The pull-request workflow has separate fast, service-test, real-adapter, contract, integration, and security jobs. The stable `quality-gate` job runs with `always()` and fails unless every required job succeeded. Configure the `main` ruleset to require this one stable status after it has run once.
+
+The service-test job runs `make service-tests`, which executes unit and component suites once and writes `artifacts/tests/service-tests.json`. The focused PostgreSQL adapter contract stays in the separate `make test-adapters` job so commit-time feedback does not require a database container.
 
 Recommended ruleset:
 
